@@ -1,5 +1,11 @@
 import { GetStaticPaths, GetStaticProps } from 'next';
+import { RichText } from 'prismic-dom';
+import { AiOutlineCalendar, AiOutlineUser } from 'react-icons/ai';
+import { BiTime } from 'react-icons/bi';
+import { format, parseISO } from 'date-fns';
+import ptBR from 'date-fns/locale/pt-BR';
 
+import { useRouter } from 'next/router';
 import { getPrismicClient } from '../../services/prismic';
 
 import commonStyles from '../../styles/common.module.scss';
@@ -26,20 +32,118 @@ interface PostProps {
   post: Post;
 }
 
-// export default function Post() {
-//   // TODO
-// }
+export default function Post({ post }: PostProps) {
+  console.log(post);
 
-// export const getStaticPaths = async () => {
-//   const prismic = getPrismicClient({});
-//   const posts = await prismic.getByType(TODO);
+  const router = useRouter();
 
-//   // TODO
-// };
+  console.log(post);
 
-// export const getStaticProps = async ({params }) => {
-//   const prismic = getPrismicClient({});
-//   const response = await prismic.getByUID(TODO);
+  if (router.isFallback) {
+    return <h2>Carregando...</h2>;
+  }
 
-//   // TODO
-// };
+  const formattedDate = format(
+    parseISO(post.first_publication_date),
+    'dd MMM yyyy',
+    {
+      locale: ptBR,
+    }
+  );
+
+  const totalWords = post.data.content.reduce((total, contentItem) => {
+    total += contentItem.heading.split(' ').length;
+
+    const words = contentItem.body.map(item => item.text.split(' ').length);
+    words.map(word => (total += word));
+
+    return total;
+  }, 0);
+
+  const averageReading = `${Math.ceil(totalWords / 200).toString()} min`;
+
+  return (
+    <main className={commonStyles.container}>
+      <article className={styles.post}>
+        <header className={styles.header}>
+          <img src={post.data.banner.url} alt="banner" />
+        </header>
+        <h1>{post.data.title}</h1>
+        <div className={commonStyles.info}>
+          <time>
+            <AiOutlineCalendar />
+            <span>{formattedDate}</span>
+          </time>
+          <span>
+            <AiOutlineUser />
+            <span>{post.data.author}</span>
+          </span>
+          <span>
+            <BiTime />
+            <span>{averageReading}</span>
+          </span>
+        </div>
+        {post.data.content.map(({ heading, body }) => (
+          <div key={heading} className={styles.postContent}>
+            {heading && <h2>{heading}</h2>}
+            <div
+              className={styles.postBody}
+              dangerouslySetInnerHTML={{ __html: RichText.asHtml(body) }}
+            />
+          </div>
+        ))}
+      </article>
+    </main>
+  );
+}
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  const prismic = getPrismicClient({});
+
+  const posts = await prismic.getByType('posts', {
+    pageSize: 2,
+  });
+
+  const paths = posts.results.map(post => {
+    return {
+      params: {
+        slug: post.uid,
+      },
+    };
+  });
+
+  return {
+    paths,
+    fallback: true,
+  };
+};
+
+export const getStaticProps: GetStaticProps = async ({ params }) => {
+  const { slug } = params;
+
+  const prismic = getPrismicClient({});
+  const response = await prismic.getByUID('posts', String(slug));
+
+  const post = {
+    first_publication_date: response.first_publication_date,
+    data: {
+      title: response.data.title,
+      banner: {
+        url: response.data.banner.url,
+      },
+      author: response.data.author,
+      content: response.data.content.map(content => {
+        return {
+          heading: content.heading,
+          body: content.body,
+        };
+      }),
+    },
+  };
+
+  return {
+    props: {
+      post,
+    },
+  };
+};

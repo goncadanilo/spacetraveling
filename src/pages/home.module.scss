@@ -1,1 +1,33 @@
-// TODO
+
+
+.posts {
+  margin-top: 3rem;
+
+  a {
+    cursor: pointer;
+
+    h1 {
+      font-size: 1.8rem;
+      color: var(--heading);
+      line-height: 1.5em;
+    }
+
+    p {
+      font-size: 1.2rem;
+      color: var(--body);
+      margin-bottom: 20px;
+      margin-top: 5px;
+    }
+
+  }
+}
+
+.button {
+  background: inherit;
+  border: none;
+  color: var(--highlight);
+
+  &:hover {
+    text-decoration: underline;
+  }
+}

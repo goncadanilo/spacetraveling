@@ -1,1 +1,34 @@
-// TODO
+.header {
+  display: flex;
+  margin: 0 auto;
+  justify-content: center;
+  align-items: center;
+
+  img {
+    width: 100%;
+    height: 400px
+  }
+}
+
+.post {
+  h1 {
+    font-size: 48px;
+    font-weight: bold;
+    color: var(--heading);
+    margin-bottom: 20px
+  }
+}
+
+.postContent {
+  h2 {
+    margin-bottom: 20px;
+    color: var(--heading);
+    font-weight: regular;
+  }
+}
+
+.postBody {
+  margin-bottom: 20px;
+  color: var(--body);
+  line-height: 1.5rem;
+}
